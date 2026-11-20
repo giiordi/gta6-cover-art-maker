@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vice Press | GTA 6 Cover Studio</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header>
+<div class="brand"><span class="mark" aria-hidden="true">V<span>I</span></span><div><strong>VICE PRESS</strong><small>GTA 6 COVER STUDIO</small></div></div>
+<div class="actions"><button id="new">New</button><button id="choose">Choose your photo</button><button id="export">Export PNG</button></div>
+</header>
+<input id="file" type="file" accept="image/*" hidden>
+<main>
+<aside aria-label="Cover controls">
+<div class="section-title"><span>01 / INPUT</span><h2>Photo</h2></div>
+<div id="drop"><img id="thumb" alt=""><div><strong id="filename"></strong><small id="source"></small></div><button id="change">Change</button></div>
+<div id="crop"></div>
+<button id="center" class="quiet">Center photo</button>
+<div class="section-title"><span>02 / ART DIRECTION</span><h2>Layout &amp; color</h2></div>
+<div id="templates" class="templates" aria-label="Template"></div>
+<div id="grades" class="grades" aria-label="Color style"></div>
+<div id="fx"></div>
+<div class="section-title"><span>03 / TYPE</span><h2>Cover text</h2></div>
+<div id="type"></div>
+<div class="section-title"><span>04 / FINISH</span><h2>Decorations</h2></div>
+<div id="decor"></div>
+<button id="random" class="quiet">Shuffle / Randomize style</button>
+</aside>
+<section class="stage" aria-label="Cover preview">
+<div class="stagebar"><div><span class="live"></span><strong>Live preview</strong></div><div id="sizes" aria-label="Export size"></div></div>
+<div class="board"><canvas id="poster" aria-label="Cover artwork"></canvas></div>
+<div class="status"><span id="format"></span><span>LOCAL STUDIO <b> / </b> PNG</span></div>
+</section>
+</main>
+<div id="toast" role="status"></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
