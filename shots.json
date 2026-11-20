@@ -2,5 +2,5 @@
   { "name": "1-cover.jpg", "format": "16:9", "template": "Comic Panels", "w": 1280, "h": 720 },
   { "name": "2-editor.jpg", "photo": "boulevard.jpg", "w": 1280, "h": 900 },
   { "name": "3-portrait.jpg", "format": "4:5", "w": 768, "h": 960 },
-  { "name": "4-square-export.png", "format": "1:1", "w": 1080, "h": 1080 }
+  { "name": "4-square-export.jpg", "format": "1:1", "w": 1080, "h": 1080 }
 ]
