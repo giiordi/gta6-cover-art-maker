@@ -1,186 +1,36 @@
-import {formats,templates,grades,sliders,decorations,initial} from './shots.js';
-import {drawCover,regions,sampleScene} from './cover.js';
-
-const by=id=>document.getElementById(id);
-const poster=by('poster'),board=poster.parentElement,file=by('file'),sample=sampleScene();
-let s=initial(),active=0,drag=null,pending=false,timer,uploadVersion=0;
-let pickerPanel=null;
-const inputs=new Map(), groups=[];
-const sampleThumb=sample.toDataURL('image/jpeg',.63);
-
-function toast(message){
-  by('toast').textContent=message;
-  clearTimeout(timer);timer=setTimeout(()=>by('toast').textContent='',2600);
-}
-function render(){
-  pending=false;
-  const [w,h]=formats[s.size],b=board.getBoundingClientRect();
-  const scale=Math.max(.01,Math.min((b.width-18)/w,(b.height-18)/h));
-  poster.style.width=Math.floor(w*scale)+'px';poster.style.height=Math.floor(h*scale)+'px';
-  if(poster.width!==w||poster.height!==h){poster.width=w;poster.height=h;}
-  drawCover(poster,s,sample);
-}
-function redraw(){if(!pending){pending=true;requestAnimationFrame(render);}}
-function choice(id,values,key,decorate){
-  const buttons=Object.entries(values).map(([value,label])=>{
-    const b=document.createElement('button');b.type='button';b.textContent=label;
-    decorate?.(b,value);
-    b.onclick=()=>{s[key]=value;if(key==='template')active=0;sync();};
-    by(id).append(b);return [value,b];
+(() => {
+  const $=id=>document.getElementById(id),art=window.CoverArt;
+  const state={format:scene.format,layout:'street',caption:'SUNSET\nSYNDICATE',kicker:'NO RULES. JUST GOLDEN HOURS.',grade:'sunset',intensity:55,spray:40,panels:[],selected:1,mode:'move'};
+  if(scene.name==='wide'){state.caption='OCEAN\nDRIVE';state.grade='neon';$('caption').value=state.caption;document.querySelectorAll('[data-grade]').forEach(b=>b.classList.toggle('active',b.dataset.grade==='neon'));}
+  const photos=[];let gesture=null,toastTimer;
+  function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2600);}
+  function syncPanel(){const p=state.panels[state.selected];$('panel-number').textContent=String(state.selected+1).padStart(2,'0');$('zoom').value=p.zoom*100;$('pan-x').value=p.px*100;$('pan-y').value=p.py*100;$('zoom-value').value=p.zoom.toFixed(1)+'×';}
+  function selection(){const cv=$('handles'),c=cv.getContext('2d');cv.width=$('poster').width;cv.height=$('poster').height;if(scene.onlyCover)return;const p=state.panels[state.selected],W=cv.width,H=cv.height,x=p.x*W,y=p.y*H,w=p.w*W,h=p.h*H,sz=W/80;c.strokeStyle='#b7efd2';c.lineWidth=W/540;c.setLineDash([W/110,W/200]);c.strokeRect(x+3,y+3,w-6,h-6);c.setLineDash([]);c.fillStyle='#b7efd2';for(const [a,b] of [[x,y],[x+w,y],[x,y+h],[x+w,y+h]])c.fillRect(a-sz/2,b-sz/2,sz,sz);c.fillStyle='#18231f';c.fillRect(x+8,y+8,W*.095,W*.025);c.fillStyle='#b7efd2';c.font=`bold ${W*.012}px Arial`;c.fillText('PANEL '+String(state.selected+1).padStart(2,'0'),x+W*.015,y+W*.026);}
+  function render(){art.render($('poster'),state,photos);selection();$('dimensions').textContent=art.sizes[state.format].join(' × ')+' PX';const wrap=document.querySelector('.canvas-wrap');wrap.style.aspectRatio=art.sizes[state.format].join('/');document.querySelectorAll('[data-format]').forEach(b=>b.classList.toggle('active',b.dataset.format===state.format));}
+  function resetLayout(){state.panels=art.layouts(state.layout,state.format);state.selected=Math.min(state.selected,state.panels.length-1);syncPanel();render();}
+  function setFormat(format){state.format=format;resetLayout();}
+  function addPhoto(src,name){return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{photos.push({image,art:art.stylize(image),src,name});const index=photos.length-1;const button=document.createElement('button');button.title='Use '+name;const thumb=document.createElement('img');thumb.src=src;thumb.alt=name;button.append(thumb);button.onclick=()=>{if($('fill-all').checked)state.panels.forEach(p=>p.photo=index);else state.panels[state.selected].photo=index;render();};$('photos').append(button);resolve(index);};image.onerror=reject;image.src=src;});}
+  async function importFiles(files){let count=0;for(const file of files){if(!file.type.startsWith('image/'))continue;try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const index=await addPhoto(data,file.name);if($('fill-all').checked&&count===0)state.panels.forEach(p=>p.photo=index);else state.panels[(state.selected+count)%state.panels.length].photo=index;count++;}catch{toast('That image could not be opened. Try JPG, PNG or WebP.');}}if(count){render();toast(count+' photo'+(count>1?'s':'')+' ready. Choose a panel to adjust its crop.');}$('file').value='';}
+  function exportPNG(){const output=document.createElement('canvas');art.render(output,state,photos);const url=output.toDataURL('image/png');const a=document.createElement('a');a.href=url;a.download='afterglow-'+state.format+'.png';a.click();toast('Exported '+output.width+' × '+output.height+' PNG');return url;}
+  $('export').onclick=exportPNG;$('upload').onclick=()=>$('file').click();$('drop').onclick=()=>$('file').click();$('drop').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click();}};$('file').onchange=e=>importFiles(e.target.files);
+  document.addEventListener('dragover',e=>{e.preventDefault();$('drop').classList.add('over');});document.addEventListener('dragleave',e=>{if(!e.relatedTarget)$('drop').classList.remove('over');});document.addEventListener('drop',e=>{e.preventDefault();$('drop').classList.remove('over');importFiles(e.dataTransfer.files);});
+  $('caption').oninput=e=>{state.caption=e.target.value;render();};$('kicker').oninput=e=>{state.kicker=e.target.value;render();};
+  for(const key of ['intensity','spray'])$(key).oninput=e=>{state[key]=+e.target.value;$(key==='intensity'?'grade-value':'spray-value').value=state[key]+'%';render();};
+  document.querySelectorAll('[data-grade]').forEach(b=>b.onclick=()=>{state.grade=b.dataset.grade;document.querySelectorAll('[data-grade]').forEach(x=>x.classList.toggle('active',x===b));render();});
+  document.querySelectorAll('[data-format]').forEach(b=>b.onclick=()=>setFormat(b.dataset.format));document.querySelectorAll('[data-layout]').forEach(b=>b.onclick=()=>{state.layout=b.dataset.layout;document.querySelectorAll('[data-layout]').forEach(x=>x.classList.toggle('active',x===b));resetLayout();});
+  for(const mode of ['move','crop'])$(mode).onclick=()=>{state.mode=mode;$(mode).classList.add('active');$(mode==='move'?'crop':'move').classList.remove('active');$('mode-hint').textContent=mode==='move'?'Drag a panel to move it. Drag its corner to resize.':'Drag the photo inside its panel. Use zoom to crop closer.';};
+  for(const [id,key]of [['zoom','zoom'],['pan-x','px'],['pan-y','py']])$(id).oninput=e=>{state.panels[state.selected][key]=+e.target.value/100;syncPanel();render();};$('reset-panel').onclick=()=>{Object.assign(state.panels[state.selected],{zoom:1,px:0,py:0});syncPanel();render();};
+  const overlay=$('handles');function point(e){const r=overlay.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};}
+  overlay.onpointerdown=e=>{const pos=point(e);let i=state.selected;const chosen=state.panels[i];const near=(x,y)=>Math.abs(pos.x-x)<.025&&Math.abs(pos.y-y)<.025;let corner=null;for(const [name,x,y]of [['tl',chosen.x,chosen.y],['tr',chosen.x+chosen.w,chosen.y],['bl',chosen.x,chosen.y+chosen.h],['br',chosen.x+chosen.w,chosen.y+chosen.h]])if(near(x,y))corner=name;
+    if(!corner){i=state.panels.findLastIndex(p=>pos.x>=p.x&&pos.x<=p.x+p.w&&pos.y>=p.y&&pos.y<=p.y+p.h);if(i<0)return;state.selected=i;}gesture={start:pos,p:{...state.panels[i]},corner};overlay.setPointerCapture(e.pointerId);syncPanel();selection();};
+  overlay.onpointermove=e=>{if(!gesture)return;const pos=point(e),dx=pos.x-gesture.start.x,dy=pos.y-gesture.start.y,p=state.panels[state.selected],o=gesture.p,clamp=(n,a,b)=>Math.min(b,Math.max(a,n));if(state.mode==='crop'){p.px=clamp(o.px+dx*3,-1,1);p.py=clamp(o.py+dy*3,-1,1);}else if(gesture.corner){const left=gesture.corner.includes('l'),top=gesture.corner.includes('t');let x=left?clamp(o.x+dx,0,o.x+o.w-.12):o.x,y=top?clamp(o.y+dy,0,o.y+o.h-.12):o.y;const right=left?o.x+o.w:clamp(o.x+o.w+dx,o.x+.12,1),bottom=top?o.y+o.h:clamp(o.y+o.h+dy,o.y+.12,1);Object.assign(p,{x,y,w:right-x,h:bottom-y});}else{p.x=clamp(o.x+dx,0,1-o.w);p.y=clamp(o.y+dy,0,1-o.h);}syncPanel();render();};overlay.onpointerup=overlay.onpointercancel=()=>gesture=null;
+  $('new').onclick=()=>{state.caption='YOUR\nAFTERGLOW';state.kicker='YOUR CITY. YOUR STORY.';$('caption').value=state.caption;$('kicker').value=state.kicker;resetLayout();toast('A fresh cover. Add your photos to make it yours.');};
+  if(scene.onlyCover)document.body.classList.add('cover-only');
+  window.studio={state,photos,setFormat,render,exportPNG,importFiles};
+  document.addEventListener('DOMContentLoaded',()=>{
+    window.ready=addPhoto(window.samplePhotos.boulevard,'Boulevard / sample')
+      .then(()=>addPhoto(window.samplePhotos.pier,'Pier / sample'))
+      .then(()=>{resetLayout();return true;})
+      .catch(()=>{toast('A sample image could not load. Choose a local photo to begin.');return false;});
   });
-  groups.push([key,buttons]);
-}
-function marker(button,className,color){
-  const span=document.createElement('span');span.className=className;
-  span.setAttribute('aria-hidden','true');
-  if(color)span.style.background=color;
-  button.prepend(span);
-}
-choice('templates',templates,'template',b=>marker(b,'template-icon'));
-choice('grades',Object.fromEntries(Object.entries(grades).map(([k,v])=>[k,v.label])),'grade',(b,k)=>marker(b,'swatch',grades[k].sky[1]));
-choice('sizes',Object.fromEntries(Object.keys(formats).map(k=>[k,k])),'size',(b,k)=>{b.title=formats[k].join(' × ');});
-
-function control(parent,key,name,input,out){
-  const wrap=document.createElement('label');wrap.className='control';
-  const row=document.createElement('span');row.textContent=name;if(out)row.append(out);
-  input.id=key;wrap.append(row,input);by(parent).append(wrap);return wrap;
-}
-const panel=document.createElement('select');
-for(const [i,name] of ['Hero','Lower left','Lower right'].entries())panel.add(new Option(name,i));
-const panelRow=control('crop','panel','Edit panel',panel);
-panel.onchange=()=>{active=Number(panel.value);sync();};
-const panelActions=document.createElement('div');
-const panelPhoto=document.createElement('button'),panelClear=document.createElement('button');
-panelPhoto.textContent='Choose panel photo';panelClear.textContent='Use main photo';
-for(const button of [panelPhoto,panelClear])button.className='quiet';
-panelActions.append(panelPhoto,panelClear);by('crop').append(panelActions);
-panelPhoto.onclick=()=>openPicker(active);
-panelClear.onclick=()=>{uploadVersion++;s.panels[active]?.image.close();s.panels[active]=null;sync();};
-
-for(const [key,[name,min,max,,unit]] of Object.entries(sliders)){
-  const input=document.createElement('input'),out=document.createElement('output');
-  input.type='range';input.min=min;input.max=max;out.htmlFor=key;
-  control(key==='zoom'?'crop':key==='titleSize'?'type':'fx',key,name,input,out);
-  inputs.set(key,[input,out,unit]);
-  input.oninput=()=>{if(key==='zoom')s.crops[active].zoom=+input.value;else s[key]=+input.value;sync();};
-}
-for(const [key,label,max] of [['top','Top text',50],['title','Big title',70],['series','Series badge',8],['caption','Bottom caption',180]]){
-  const input=document.createElement(key==='caption'?'textarea':'input');
-  if(key!=='caption')input.type='text';
-  input.maxLength=max;control('type',key,label,input);
-  inputs.set(key,[input]);input.oninput=()=>{s[key]=input.value;redraw();};
-}
-for(const [key,label] of Object.entries(decorations)){
-  const input=document.createElement('input');input.type='checkbox';input.id=key;
-  const item=document.createElement('label');item.append(input,label);by('decor').append(item);
-  inputs.set(key,[input]);input.onchange=()=>{s[key]=input.checked;redraw();};
-}
-function sync(){
-  for(const [key,buttons] of groups)for(const [value,b] of buttons)b.setAttribute('aria-pressed',s[key]===value);
-  for(const [key,[input,out,unit]] of inputs){
-    const value=key==='zoom'?s.crops[active].zoom:s[key];
-    if(input.type==='checkbox')input.checked=value;
-    else if(input.value!==String(value))input.value=value;
-    if(out)out.value=value+unit;
-  }
-  const photo=s.panels[active]||s.photo;
-  by('thumb').src=photo?.thumb||sampleThumb;
-  by('filename').textContent=photo?.name||'Vice City beach';
-  by('source').textContent=photo?'Local photo':'Procedural sample';
-  const comic=s.template==='comic';
-  panelRow.hidden=panelActions.hidden=!comic;panel.value=active;
-  panelClear.disabled=!s.panels[active];
-  by('format').textContent=s.size+' / '+formats[s.size].join(' × ');
-  redraw();
-}
-function openPicker(index=null){
-  pickerPanel=index;file.value='';file.click();
-}
-by('choose').onclick=()=>openPicker();
-by('change').onclick=()=>openPicker(s.panels[active]?active:null);
-by('drop').onclick=e=>{if(!e.target.closest('button'))openPicker();};
-async function loadPhoto(photo,index=null){
-  if(!photo)return;
-  const version=++uploadVersion;
-  try{
-    const image=await createImageBitmap(photo);
-    if(version!==uploadVersion){image.close();return;}
-    const preview=document.createElement('canvas');preview.width=120;preview.height=80;
-    const scale=Math.max(120/image.width,80/image.height),w=image.width*scale,h=image.height*scale;
-    preview.getContext('2d').drawImage(image,(120-w)/2,(80-h)/2,w,h);
-    const data={image,name:photo.name,thumb:preview.toDataURL('image/jpeg',.72)};
-    if(index===null){
-      s.photo?.image.close();s.photo=data;
-      s.panels[0]?.image.close();s.panels[0]=null;
-      s.crops=s.crops.map((crop,i)=>s.panels[i]?crop:{x:0,y:0,zoom:100});
-      active=0;
-    }else{
-      s.panels[index]?.image.close();s.panels[index]=data;active=s.template==='comic'?index:0;
-      s.crops[index]={x:0,y:0,zoom:100};
-    }
-    sync();toast('Photo loaded');
-  }catch{if(version===uploadVersion)toast('Could not open this image');}
-}
-file.onchange=()=>loadPhoto(file.files[0],pickerPanel);
-const dropTargets=[by('drop'),board];
-for(const target of dropTargets){
-  target.ondragover=e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();target.classList.add('active-drop');}};
-  target.ondragleave=()=>target.classList.remove('active-drop');
-  target.ondrop=e=>{
-    e.preventDefault();target.classList.remove('active-drop');
-    const i=target===board?panelAt(e):0;
-    loadPhoto(e.dataTransfer.files[0],i>0?i:null);
-  };
-}
-window.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('Files'))e.preventDefault();});
-window.addEventListener('drop',e=>e.preventDefault());
-function panelAt(e){
-  const box=poster.getBoundingClientRect();
-  const x=(e.clientX-box.left)/box.width,y=(e.clientY-box.top)/box.height;
-  return s.template==='comic'&&y>.595?(x<.39?1:2):0;
-}
-const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
-poster.onpointerdown=e=>{
-  if(e.button!==0||drag)return;
-  active=panelAt(e);sync();
-  drag={id:e.pointerId,x:e.clientX,y:e.clientY,index:active};
-  poster.setPointerCapture(e.pointerId);
-};
-poster.onpointermove=e=>{
-  if(!drag||drag.id!==e.pointerId)return;
-  const crop=s.crops[drag.index],box=poster.getBoundingClientRect();
-  const [, ,w,h]=regions(s.template,box.width,box.height)[drag.index]||[0,0,box.width,box.height];
-  crop.x=clamp(crop.x+(e.clientX-drag.x)*3/w,-1,1);
-  crop.y=clamp(crop.y+(e.clientY-drag.y)*3/h,-1,1);
-  drag.x=e.clientX;drag.y=e.clientY;redraw();
-};
-poster.onlostpointercapture=()=>{drag=null;};
-poster.addEventListener('wheel',e=>{
-  e.preventDefault();active=panelAt(e);
-  const crop=s.crops[active];crop.zoom=clamp(crop.zoom+(e.deltaY<0?6:-6),100,300);sync();
-},{passive:false});
-by('center').onclick=()=>{Object.assign(s.crops[active],{x:0,y:0});sync();toast('Photo centered');};
-by('new').onclick=()=>{
-  uploadVersion++;s.photo?.image.close();s.panels.forEach(p=>p?.image.close());
-  s=initial();active=0;file.value='';sync();toast('New cover');
-};
-const pick=items=>items[Math.floor(Math.random()*items.length)];
-by('random').onclick=()=>{
-  const [title,caption]=pick([['SUNSET HEIST','Last light. First getaway.'],['OCEAN DRIVE','Good nights make bad alibis.'],['AFTER HOURS','Paradise never sleeps.'],['HEAT WAVE','The city keeps its secrets.']].filter(([title])=>title!==s.title));
-  Object.assign(s,{title,caption,template:pick(Object.keys(templates)),grade:pick(Object.keys(grades)),
-    posterize:pick([1,2,3,4]),saturation:pick([112,134,156,182]),strength:pick([50,65,82,95])});active=0;sync();
-};
-by('export').onclick=()=>{
-  const [w,h]=formats[s.size],title=s.title;
-  const output=Object.assign(document.createElement('canvas'),{width:w,height:h});
-  drawCover(output,s,sample);
-  output.toBlob(blob=>{
-    if(!blob){toast('PNG export failed');return;}
-    const href=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=href;a.download=(title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'vice-press')+'-'+w+'x'+h+'.png';
-    a.click();setTimeout(()=>URL.revokeObjectURL(href),30000);toast('PNG exported · '+w+' × '+h);
-  },'image/png');
-};
-new ResizeObserver(redraw).observe(board);
-sync();
-Promise.all([document.fonts.load('900 40px Cover'),document.fonts.load('14px Studio')]).then(redraw,redraw);
+})();

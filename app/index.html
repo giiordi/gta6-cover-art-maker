@@ -1,41 +1,13 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vice Press | GTA 6 Cover Studio</title>
-<link rel="icon" href="data:,">
-<link rel="stylesheet" href="./style.css">
-</head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Afterglow VI — Cover studio</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css"></head>
 <body>
-<header>
-<div class="brand"><span class="mark" aria-hidden="true">V<span>I</span></span><div><strong>VICE PRESS</strong><small>GTA 6 COVER STUDIO</small></div></div>
-<div class="actions"><button id="new">New</button><button id="choose">Choose your photo</button><button id="export">Export PNG</button></div>
-</header>
-<input id="file" type="file" accept="image/*" hidden>
-<main>
-<aside aria-label="Cover controls">
-<div class="section-title"><span>01 / INPUT</span><h2>Photo</h2></div>
-<div id="drop"><img id="thumb" alt=""><div><strong id="filename"></strong><small id="source"></small></div><button id="change">Change</button></div>
-<div id="crop"></div>
-<button id="center" class="quiet">Center photo</button>
-<div class="section-title"><span>02 / ART DIRECTION</span><h2>Layout &amp; color</h2></div>
-<div id="templates" class="templates" aria-label="Template"></div>
-<div id="grades" class="grades" aria-label="Color style"></div>
-<div id="fx"></div>
-<div class="section-title"><span>03 / TYPE</span><h2>Cover text</h2></div>
-<div id="type"></div>
-<div class="section-title"><span>04 / FINISH</span><h2>Decorations</h2></div>
-<div id="decor"></div>
-<button id="random" class="quiet">Shuffle / Randomize style</button>
-</aside>
-<section class="stage" aria-label="Cover preview">
-<div class="stagebar"><div><span class="live"></span><strong>Live preview</strong></div><div id="sizes" aria-label="Export size"></div></div>
-<div class="board"><canvas id="poster" aria-label="Cover artwork"></canvas></div>
-<div class="status"><span id="format"></span><span>LOCAL STUDIO <b> / </b> PNG</span></div>
-</section>
-</main>
-<div id="toast" role="status"></div>
-<script type="module" src="./src/main.js"></script>
-</body>
-</html>
+<header><a class="brand" href="./"><span class="brandmark">A / VI</span><span>AFTERGLOW<small>THE OFFLINE COVER STUDIO</small></span></a><div class="header-actions"><button id="new">New</button><button id="upload">Choose your photo</button><button id="export" class="primary">Export PNG</button></div></header>
+<main><aside class="left"><div class="eyebrow">YOUR STORY. AFTER HOURS.</div><h1>Make the<br>city yours<span>.</span></h1><p class="intro">A little sun. A little trouble.<br>Turn your photos into a cover.</p>
+<section><div class="section-title"><span>01 / THE PHOTOS</span><span class="pill">LOCAL ONLY</span></div><div id="drop" tabindex="0" role="button" aria-label="Choose photos or drop images"><b>＋</b><strong>Drop your photos here</strong><small>or click to browse · JPG, PNG, WebP</small></div><input id="file" type="file" accept="image/*" multiple hidden><div id="photos" class="photos"></div><label class="check"><input id="fill-all" type="checkbox" checked> Use chosen photo in every panel</label><p class="hint">Or select a panel, then click a photo.</p></section>
+<section><div class="section-title">02 / THE HEADLINE</div><label for="caption">Cover caption</label><textarea id="caption" maxlength="48" rows="2">SUNSET
+SYNDICATE</textarea><div class="field-row"><label for="kicker">Small print</label><span>MAKE IT PERSONAL</span></div><input id="kicker" maxlength="42" value="NO RULES. JUST GOLDEN HOURS."></section>
+<section><div class="section-title">03 / THE ATMOSPHERE</div><div class="grades"><button data-grade="sunset" class="active"><i></i>Sunset</button><button data-grade="neon"><i></i>Neon</button><button data-grade="chrome"><i></i>Chrome</button></div><label class="range-label" for="intensity">Colour grade <output id="grade-value">55%</output></label><input id="intensity" type="range" min="0" max="100" value="55"><label class="range-label" for="spray">Spray & print texture <output id="spray-value">40%</output></label><input id="spray" type="range" min="0" max="100" value="40"></section><div class="privacy">◉ Made on your device.<br><small>Your photos never leave this window.</small></div></aside>
+<div class="workspace"><div class="workspace-top"><div><span class="live-dot"></span> LIVE COVER <span class="muted">/ UNTITLED 01</span></div><span id="dimensions">1080 × 1350 PX</span></div><div id="stage"><div class="canvas-wrap"><canvas id="poster" width="1080" height="1350" aria-label="Editable cover preview"></canvas><canvas id="handles" width="1080" height="1350" aria-label="Drag panels to move, corners to resize"></canvas></div></div><div class="workspace-bottom"><span>✦ ORIGINAL ART. YOUR MAIN CHARACTER ENERGY.</span><span id="status" role="status">All changes rendered</span></div></div>
+<aside class="right"><div class="section-title">THE ARTBOARD</div><h2>Pick your frame.</h2><div class="formats"><button data-format="square"><i class="square"></i><span>Square<small>1080 × 1080</small></span><em>1:1</em></button><button data-format="portrait" class="active"><i class="portrait"></i><span>Portrait<small>1080 × 1350</small></span><em>4:5</em></button><button data-format="wide"><i class="wide"></i><span>Cinematic<small>1920 × 1080</small></span><em>16:9</em></button></div>
+<section><div class="section-title">PANEL COMPOSITION</div><div class="layouts"><button data-layout="street" class="active">▥<small>Street</small></button><button data-layout="grid">▦<small>Grid</small></button><button data-layout="hero">▣<small>Hero</small></button></div></section><section><div class="section-title">SELECTED PANEL <span id="panel-number">01</span></div><div class="mode-switch"><button id="move" class="active">Move panel</button><button id="crop">Crop photo</button></div><p class="hint" id="mode-hint">Drag a panel to move it. Drag its corner to resize.</p><label class="range-label" for="zoom">Photo zoom <output id="zoom-value">1.0×</output></label><input id="zoom" type="range" min="100" max="300" value="100"><label class="range-label" for="pan-x">Photo horizontal</label><input id="pan-x" type="range" min="-100" max="100" value="0"><label class="range-label" for="pan-y">Photo vertical</label><input id="pan-y" type="range" min="-100" max="100" value="0"><button id="reset-panel" class="text-button">↺ Reset this crop</button></section><div class="export-note"><span>READY WHEN YOU ARE</span><strong>Your next iconic cover.</strong><p>Full-resolution PNG.<br>No watermark. No sign-up.</p></div><div class="edition">AFTERGLOW VI <span>STUDIO / 001</span></div></aside></main><div id="toast" role="status"></div>
+<script src="src/shots.js"></script><script src="src/cover.js"></script><script src="src/main.js"></script><script src="src/sample-data.js"></script></body></html>
